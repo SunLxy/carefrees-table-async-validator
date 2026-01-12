@@ -136,8 +136,7 @@ export declare function useRegisterChildInstance<
   childInstance: ChildInstance<T[M]>;
   providerInstance: ProviderInstance<T>;
 };
-import { RuleItem, ValidateFieldsError, Values } from 'async-validator';
-import { ChildInstanceValidateAllResult } from './interface';
+
 /**子项实例*/
 export declare class ChildInstance<
   T extends {
