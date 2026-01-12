@@ -9,5 +9,8 @@ export default defineConfig({
   server: {
     base: '/carefrees-table-async-validator/',
   },
+  html: {
+    title: 'Carefrees Table Async Validator',
+  },
   plugins: [pluginReact()],
 });
