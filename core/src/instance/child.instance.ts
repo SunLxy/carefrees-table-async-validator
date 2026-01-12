@@ -7,7 +7,9 @@ import { createContext, useRef, useContext } from "react"
 import { ChildInstanceValidateAllResult } from "./interface";
 
 /**子项实例*/
-export class ChildInstance<T extends object = object> {
+export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
+  /**命名空间*/
+  namespace: PropertyKey = ''
   /**行主键字段*/
   rowKey: string = 'rowId'
   /**
@@ -18,11 +20,19 @@ export class ChildInstance<T extends object = object> {
    * 行数据的主键值，对应一行中所有列的错误信息
   */
   errorState = proxy<Record<string, Record<string, string[]>>>({})
+
+  // ===================================================挂载参数================================================================
+  /**
+   * 行数据删除时触发,由外部挂载事件
+  */
+  onDeleteRow: (rowKey: string) => void = () => void 0;
+  // ===================================================挂载参数================================================================
+
   // ===================================================行数据处理================================================================
   /**
    * 更新行数据
   */
-  updatedRowData = (rowKey: string, objectData: Record<string, T>, isValidate?: boolean) => {
+  updatedRowData = (rowKey: string, objectData: Partial<T>, isValidate: boolean = true) => {
     if (!this.state[rowKey]) {
       this.state[rowKey] = {} as T
     }
@@ -37,11 +47,11 @@ export class ChildInstance<T extends object = object> {
     return this
   }
   /**新增一行数据*/
-  addRowData = (objectData: Record<string, T>) => {
+  addRowData = (objectData: Partial<T>) => {
     const rowId = Date.now() + '_' + Math.random().toString(36).substring(2);
-    const _item = { [this.rowKey]: rowId, ...objectData }
-    this.state[rowId] = _item as T
-    return rowId
+    const _item = { [this.rowKey]: rowId, ...objectData } as T
+    this.state[rowId] = { ..._item } as T
+    return { rowId, _item }
   }
   /**删除一行数据*/
   deleteRowData = (rowKey: string) => {
@@ -176,7 +186,7 @@ export class ChildInstance<T extends object = object> {
   */
   validateAll = async (options: { rowKeys?: string[], fields?: string[], isReject?: boolean }): Promise<ChildInstanceValidateAllResult<T>> => {
     const { rowKeys, fields, isReject = true } = options
-    let _keys = rowKeys || Object.keys(this.state || {});
+    let _keys = rowKeys
     if (Array.isArray(rowKeys) && rowKeys.length) {
       _keys = rowKeys
     } else {
@@ -189,10 +199,8 @@ export class ChildInstance<T extends object = object> {
       const key = _keys[index];
       const rowData = this.state[key];
       try {
-        if (Array.isArray(fields) && fields.length) {
-          await this.validate(rowData, fields, true);
-          dataList.push(rowData)
-        }
+        await this.validate(rowData, fields, true);
+        dataList.push(rowData)
       } catch (errorData) {
         isErrorInfo = true;
         if (Array.isArray(errorData?.errors) && errorData?.errors?.length && errorData?.fields) {
@@ -239,7 +247,7 @@ export class ChildInstance<T extends object = object> {
 }
 
 /**初始化实例*/
-export function useChildInstance<T extends object = object>(instance?: ChildInstance<T>) {
+export function useChildInstance<T extends { [K in keyof T]: T[K] } = object>(instance?: ChildInstance<T>) {
   const ref = useRef<ChildInstance<T>>()
   if (!ref.current) {
     if (instance) {
@@ -252,15 +260,21 @@ export function useChildInstance<T extends object = object>(instance?: ChildInst
 }
 
 /**context*/
-export const ChildInstanceContext = createContext(new ChildInstance())
+export const ChildInstanceContext = createContext<ChildInstance<any>>(new ChildInstance<any>())
 
 /**仅获取实例*/
-export const useChildInstanceContext = () => useContext(ChildInstanceContext)
+export function useChildInstanceContext<T extends { [K in keyof T]: T[K] } = object>() {
+  return useContext(ChildInstanceContext) as ChildInstance<T>
+}
 
 /**获取状态+错误信息+实例*/
-export const useChildInstanceContextState = () => {
-  const instance = useContext(ChildInstanceContext)
+export function useChildInstanceContextState<T extends { [K in keyof T]: T[K] } = object>() {
+  const instance = useContext(ChildInstanceContext) as ChildInstance<T>
   const state = useSnapshot(instance.state)
   const errorState = useSnapshot(instance.errorState)
-  return [state, errorState, instance]
+  return [state, errorState, instance] as [
+    Record<string, T>,
+    Record<string, Record<keyof T, string[]>>,
+    ChildInstance<T>,
+  ]
 }

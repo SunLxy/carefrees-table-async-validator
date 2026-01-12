@@ -34,7 +34,7 @@ export class ProviderInstance<T extends { [K in keyof T]: T[K] }> {
    * @param options.isReject 是否使用 Promise.reject 抛出错误(可选)
    * @returns 验证结果
   */
-  validate = async (options: { names?: (keyof T)[], rowKey?: string[], fields?: string[], isReject?: boolean }): Promise<ProviderInstanceValidateResult<T>> => {
+  validate = async (options: { names?: (keyof T)[], rowKey?: string[], fields?: string[], isReject?: boolean } = {}): Promise<ProviderInstanceValidateResult<T>> => {
     const { names, rowKey, fields, isReject = true } = options
     // rowKey 如果不为空，则验证指定多行数据，如果没有，则验证所有
     // fields 如果不为空，则验证指定列数据，如果没有，则验证所有
@@ -73,7 +73,7 @@ export class ProviderInstance<T extends { [K in keyof T]: T[K] }> {
 /**初始化实例*/
 export function useProviderInstance<T extends { [K in keyof T]: T[K] }>(instance?: ProviderInstance<T>) {
   const ref = useRef<ProviderInstance<T>>()
-  if (ref.current) {
+  if (!ref.current) {
     if (instance) {
       ref.current = instance
     } else {
@@ -84,13 +84,11 @@ export function useProviderInstance<T extends { [K in keyof T]: T[K] }>(instance
 }
 
 /**context*/
-export function ProviderInstanceContext<T extends { [K in keyof T]: T[K] }>() {
-  return createContext<ProviderInstance<T>>(new ProviderInstance<T>())
-}
+export const ProviderInstanceContext = createContext<ProviderInstance<any>>(new ProviderInstance<any>())
 
 /**获取状态+实例*/
 export function useProviderInstanceContextState<T extends { [K in keyof T]: T[K] }>() {
-  const providerInstance = useContext(ProviderInstanceContext<T>())
+  const providerInstance = useContext<ProviderInstance<T>>(ProviderInstanceContext)
   const state = useSnapshot(providerInstance.childInstanceState)
   return [state, providerInstance] as unknown as [{
     [K in keyof T]: ChildInstance<T[K]>;
@@ -99,13 +97,14 @@ export function useProviderInstanceContextState<T extends { [K in keyof T]: T[K]
 
 /**仅获取实例*/
 export function useProviderInstanceContext<T extends { [K in keyof T]: T[K] }>() {
-  return useContext<ProviderInstance<T>>(ProviderInstanceContext<T>())
+  return useContext<ProviderInstance<T>>(ProviderInstanceContext)
 }
 
 /**注册子实例*/
-export function useRegisterChildInstance<T extends { [K in keyof T]: T[K] }, M extends keyof T>(name: M) {
+export function useRegisterChildInstance<T extends { [K in keyof T]: T[K] }, M extends keyof T = keyof T>(name: M) {
   const providerInstance = useProviderInstanceContext<T>()
   const childInstance = useChildInstance<T[M]>()
+  childInstance.namespace = name
   useEffect(() => {
     providerInstance.register(name, childInstance)
     return () => providerInstance.unregister(name)
