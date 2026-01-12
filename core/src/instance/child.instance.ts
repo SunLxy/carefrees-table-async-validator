@@ -20,10 +20,41 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
    * 行数据的主键值，对应一行中所有列的错误信息
   */
   errorState = proxy<Record<string, Record<string, string[]>>>({})
-
+  /**是否初始化*/
+  private isCtor = false
+  /**原始数据列表(未初始化时存储数据)*/
+  _o_dataList: T[] = []
+  /**最新的列表渲染数据(每一次传入的数据)*/
+  _last_dataList: Record<string, string | number>[] = []
+  /**
+   * 初始化值(建议进行深度拷贝，避免直接引用导致数据存在问题)
+  */
+  ctor = (data: T[] = []) => {
+    this._last_dataList = [...data]
+    if (this.isCtor) {
+      return data
+    }
+    const initList: Record<string, string | number>[] = []
+    this._o_dataList = [...data]
+    this._last_dataList = []
+    if (Array.isArray(data)) {
+      const _data = [...data]
+      while (_data.length) {
+        const item = _data.shift()
+        if (item) {
+          this._last_dataList.push({ [this.rowKey]: item[this.rowKey] })
+          initList.push({ [this.rowKey]: item[this.rowKey] })
+          this.state[item[this.rowKey]] = { ...item }
+        }
+      }
+    }
+    this.isCtor = true
+    return initList
+  }
   // ===================================================挂载参数================================================================
   /**
    * 行数据删除时触发,由外部挂载事件
+   * @param rowKey 行主键值
   */
   onDeleteRow: (rowKey: string) => void = () => void 0;
   // ===================================================挂载参数================================================================
@@ -31,6 +62,9 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
   // ===================================================行数据处理================================================================
   /**
    * 更新行数据
+   * @param rowKey 行主键值
+   * @param objectData 行数据对象
+   * @param isValidate 是否验证(可选)
   */
   updatedRowData = (rowKey: string, objectData: Partial<T>, isValidate: boolean = true) => {
     if (!this.state[rowKey]) {
@@ -46,21 +80,26 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
     }
     return this
   }
-  /**新增一行数据*/
+  /**新增一行数据
+   * @param objectData 行数据对象
+  */
   addRowData = (objectData: Partial<T>) => {
     const rowId = Date.now() + '_' + Math.random().toString(36).substring(2);
     const _item = { [this.rowKey]: rowId, ...objectData } as T
     this.state[rowId] = { ..._item } as T
     return { rowId, _item }
   }
-  /**删除一行数据*/
+  /**删除一行数据
+   * @param rowKey 行主键值
+  */
   deleteRowData = (rowKey: string) => {
     delete this.state[rowKey]
     delete this.errorState[rowKey]
     return this
   }
   /**
-   * 清理所有行数据
+   * 清理所有数据,并设置成未进行初始化
+   * @param isInitProxy 是否初始化为新的proxy对象(可选)
   */
   clear = (isInitProxy?: boolean) => {
     if (isInitProxy) {
@@ -72,6 +111,9 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
         delete this.state[rowKey]
       }
     }
+    this.clearErrorInfo(isInitProxy)
+    this._o_dataList = []
+    this.isCtor = false
     return this
   }
   // ===================================================行数据处理================================================================
@@ -79,6 +121,8 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
   // ===================================================错误信息处理================================================================
   /**
    * 更新行数据的错误信息
+   * @param rowKey 行主键值
+   * @param objectErrorInfo 行数据错误信息对象
   */
   updatedErrorInfo = (rowKey: string, objectErrorInfo: Record<string, string[]>) => {
     if (!this.errorState[rowKey]) {
@@ -93,6 +137,8 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
   }
   /**
    * 清理错误信息
+   * @param rowKey 行主键值
+   * @param fields 列字段数组(可选)
   */
   deleteErrorInfo = (rowKey: string, fields?: string | string[]) => {
     if (fields && this.errorState[rowKey]) {
@@ -126,9 +172,13 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
   }
   // ===================================================错误信息处理================================================================
   // ===================================================规则处理================================================================
-  /**列规则*/
+  /**列规则 */
   rules: Record<string, ((rowData: T, instance: ChildInstance<T>) => RuleItem[] | Promise<RuleItem[]>) | RuleItem[]> = {}
-  /**规则验证*/
+  /**规则验证
+   * @param rowData 行数据对象
+   * @param fields 列字段数组(可选)
+   * @param isReturn 是否返回验证结果(可选)
+  */
   validate = async (rowData: T, fields?: string[], isReturn: boolean = true): Promise<ValidateFieldsError | Values> => {
     let _fields = fields
     const rules: Record<string, RuleItem[]> = {}
@@ -229,19 +279,6 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
       list.push({ [this.rowKey]: rowKey })
     }
     return { data: object, list }
-  }
-  /**
-   * 直接把数组 转成 主键 => 数据 的对象, 直接存储到 state, 并返回 [ { [主键]:主键值 } ] 格式
-  */
-  ctorSaveState = <K extends T = T>(array: K[]) => {
-    const list: Record<string, string | number>[] = []
-    for (let index = 0; index < array.length; index++) {
-      const item = array[index];
-      const rowKey = item[this.rowKey]
-      this.state[rowKey] = { ...item }
-      list.push({ [this.rowKey]: rowKey })
-    }
-    return list
   }
   // ===================================================数据转换================================================================
 }

@@ -2,6 +2,7 @@ import { ValidateError } from "async-validator"
 import { ValidateFieldsError } from "async-validator"
 import { Values } from "async-validator"
 
+/**子实例验证返回 */
 export interface ChildInstanceValidateAllResult<T extends object = object> {
   /**错误信息*/
   errorInfo: Record<string, { errors: ValidateError[] | null, fields: ValidateFieldsError | Values, otherError?: any }>

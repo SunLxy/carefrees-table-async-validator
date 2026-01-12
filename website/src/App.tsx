@@ -8,7 +8,7 @@ import {
 } from "@carefrees/table-async-validator"
 import { Table, Form, Button, Input, Tooltip, Popconfirm, } from "antd"
 import type { TableProps } from "antd"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 
 interface TableNameStateRowType {
   name: string
@@ -21,11 +21,9 @@ interface TableNameState {
   b: TableNameStateRowType,
 }
 
-
 export const RenderCellDelete = (props: any) => {
   const { rowData } = props
   const childInstance = useChildInstanceContext<TableNameStateRowType>()
-
   return <Popconfirm
     title="确认删除吗？"
     description="删除后将无法恢复"
@@ -42,10 +40,12 @@ export const RenderCellDelete = (props: any) => {
 
 const RenderCellInput = (props: { rowData: TableNameStateRowType, field: keyof TableNameStateRowType }) => {
   const { rowData, field } = props
-
   const [state, errorState, childInstance] = useChildInstanceContextState<TableNameStateRowType>()
+  // 获取当前行的主键值
   const rowId = rowData.rowId;
+  // 获取当前行的列值
   const value = state?.[rowId]?.[field];
+  // 获取当前行的列错误信息
   const errorList = errorState?.[rowId]?.[field];
 
   const errorTip = useMemo(() => {
@@ -101,13 +101,20 @@ const columns: TableProps['columns'] = [
 
 function ChildTable(props: {
   name: keyof TableNameState,
-  onChange?: (value: TableNameStateRowType[]) => void,
+  onChange?: (value: Record<string, string | number>[]) => void,
   value?: TableNameStateRowType[],
 }) {
   const { name, onChange, value } = props
+
+  /**注册子实例*/
   const { childInstance } = useRegisterChildInstance<TableNameState>(name)
+  /**设置行数据的主键值，对应一行中所有列的错误信息*/
   childInstance.rowKey = 'rowId'
+  /**数据转换，如果未初始化会进行初始化，如果已经初始化完成，直接返回传入的数据列表*/
+  const _value = useMemo(() => childInstance.ctor(value), [childInstance, value])
+
   useMemo(() => {
+    // 设置校验规则
     childInstance.rules = {
       name: [{ required: true, message: '请输入姓名' }],
       age: [{ required: true, message: '请输入年龄' }],
@@ -117,29 +124,42 @@ function ChildTable(props: {
   const onDeleteRow = (rowKey: string) => {
     childInstance.deleteRowData(rowKey)
     if (onChange) {
-      onChange(value?.filter((item) => item.rowId !== rowKey) || [])
+      onChange(_value?.filter((item) => item.rowId !== rowKey) || [])
     }
   }
+  /**挂载删除操作方法*/
   childInstance.onDeleteRow = onDeleteRow
+
+  useEffect(() => {
+    return () => {
+      childInstance.clear()
+    }
+  }, [])
+
   return <ChildInstanceContext.Provider value={childInstance}>
     <div>
       <Table
         size="small"
         rowKey='rowId'
         columns={columns}
-        dataSource={value}
+        dataSource={_value}
         pagination={false}
       />
       <Button
         onClick={() => {
           const result = childInstance.addRowData({ name: '', age: 0, })
           if (onChange) {
-            onChange([...(value || [])].concat([result._item]))
+            onChange([...(_value || [])].concat([{ rowId: result.rowId }]))
           }
         }}
       >新增一行</Button>
     </div>
   </ChildInstanceContext.Provider>
+}
+
+
+const formData = {
+  a: [{ name: 'd', age: 0, rowId: 'a1' }],
 }
 
 const App = () => {
@@ -163,14 +183,14 @@ const App = () => {
 
   return (
     <ProviderInstanceContext.Provider value={providerInstance}>
-      <Form form={form}>
-        <Form.Item name="1" label="1" rules={[{ required: true, message: '请输入' }]} >
+      <Form layout="vertical" form={form} initialValues={formData}>
+        <Form.Item name="1" label="输入框1" rules={[{ required: true, message: '请输入' }]} >
           <Input />
         </Form.Item>
-        <Form.Item name="a" label="a" >
+        <Form.Item name="a" label="表格数据a" >
           <ChildTable name="a" />
         </Form.Item>
-        <Form.Item name="b" label="b" >
+        <Form.Item name="b" label="表格数据b" >
           <ChildTable name="b" />
         </Form.Item>
       </Form>

@@ -5,7 +5,6 @@ import { createContext, useContext, useEffect, useRef } from "react"
 import { proxy, ref, useSnapshot, } from "valtio"
 import { ProviderInstanceValidateResult } from "./interface"
 import { ChildInstance, useChildInstance } from "./child.instance"
-
 /**父项实例*/
 export class ProviderInstance<T extends { [K in keyof T]: T[K] }> {
   /*** 子实例 */
@@ -69,7 +68,6 @@ export class ProviderInstance<T extends { [K in keyof T]: T[K] }> {
     return Promise.resolve({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo })
   }
 }
-
 /**初始化实例*/
 export function useProviderInstance<T extends { [K in keyof T]: T[K] }>(instance?: ProviderInstance<T>) {
   const ref = useRef<ProviderInstance<T>>()
