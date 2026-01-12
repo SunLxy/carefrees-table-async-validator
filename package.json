@@ -1,0 +1,20 @@
+{
+  "name": "root",
+  "private": true,
+  "workspaces": [
+    "core",
+    "website"
+  ],
+  "scripts": {
+    "build": "npm run-script build --workspace @carefrees/table-async-validator",
+    "watch": "npm run-script watch --workspace @carefrees/table-async-validator",
+    "website": "npm run-script build --workspace website",
+    "start": "npm run-script start --workspace website",
+    "version": "lerna version --exact --force-publish --no-push --no-git-tag-version"
+  },
+  "devDependencies": {
+    "@carefrees/rslib": "~0.1.0",
+    "lerna": "^7.0.1",
+    "typescript": "~5.6.3"
+  }
+}
