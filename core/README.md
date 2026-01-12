@@ -173,7 +173,7 @@ export declare class ChildInstance<
   /**
    * 更新行数据
    * @param rowKey 行主键值
-   * @param objectData 行数据对象
+   * @param objectData 更新数据对象
    * @param isValidate 是否验证(可选)
    */
   updatedRowData: (
@@ -182,7 +182,7 @@ export declare class ChildInstance<
     isValidate?: boolean
   ) => this;
   /**新增一行数据
-   * @param objectData 行数据对象
+   * @param objectData 初始值
    */
   addRowData: (objectData: Partial<T>) => {
     rowId: string;
