@@ -63,7 +63,7 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
   /**
    * 更新行数据
    * @param rowKey 行主键值
-   * @param objectData 行数据对象
+   * @param objectData 更新数据对象
    * @param isValidate 是否验证(可选)
   */
   updatedRowData = (rowKey: string, objectData: Partial<T>, isValidate: boolean = true) => {
@@ -81,7 +81,7 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
     return this
   }
   /**新增一行数据
-   * @param objectData 行数据对象
+   * @param objectData 初始值
   */
   addRowData = (objectData: Partial<T>) => {
     const rowId = Date.now() + '_' + Math.random().toString(36).substring(2);
