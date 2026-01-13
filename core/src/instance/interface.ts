@@ -2,6 +2,8 @@ import { ValidateError } from "async-validator"
 import { ValidateFieldsError } from "async-validator"
 import { Values } from "async-validator"
 
+export type MObject<T> = { [K in keyof T]: T[K] }
+
 /**子实例验证返回 */
 export interface ChildInstanceValidateAllResult<T extends object = object> {
   /**错误信息*/
@@ -13,12 +15,12 @@ export interface ChildInstanceValidateAllResult<T extends object = object> {
 }
 
 /**映射类型，将每个子项的验证结果映射到父项验证结果中*/
-export type ProviderInstanceValidateResultMappedType<T extends { [K in keyof T]: T[K] }> = {
+export type ProviderInstanceValidateResultMappedType<T extends MObject<T>> = {
   [K in keyof T]: ({ name: K } & ChildInstanceValidateAllResult<T[K]>)[]
 }[keyof T]
 
 /**父项实例验证结果*/
-export interface ProviderInstanceValidateResult<T extends { [K in keyof T]: T[K] }> {
+export interface ProviderInstanceValidateResult<T extends MObject<T>> {
   /** 没找到实例*/
   nameToNotFound: { name: keyof T, message: string }[]
   /**有错误实例*/

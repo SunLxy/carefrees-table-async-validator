@@ -4,10 +4,10 @@
 import { proxy, useSnapshot } from "valtio"
 import AsyncValidator, { RuleItem, ValidateError, ValidateFieldsError, Values } from 'async-validator';
 import { createContext, useRef, useContext } from "react"
-import { ChildInstanceValidateAllResult } from "./interface";
+import type { ChildInstanceValidateAllResult, MObject } from "./interface";
 
 /**子项实例*/
-export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
+export class ChildInstance<T extends MObject<T> = object> {
   /**命名空间*/
   namespace: PropertyKey = ''
   /**行主键字段*/
@@ -284,7 +284,7 @@ export class ChildInstance<T extends { [K in keyof T]: T[K] } = object> {
 }
 
 /**初始化实例*/
-export function useChildInstance<T extends { [K in keyof T]: T[K] } = object>(instance?: ChildInstance<T>) {
+export function useChildInstance<T extends MObject<T> = object>(instance?: ChildInstance<T>) {
   const ref = useRef<ChildInstance<T>>()
   if (!ref.current) {
     if (instance) {
@@ -300,12 +300,12 @@ export function useChildInstance<T extends { [K in keyof T]: T[K] } = object>(in
 export const ChildInstanceContext = createContext<ChildInstance<any>>(new ChildInstance<any>())
 
 /**仅获取实例*/
-export function useChildInstanceContext<T extends { [K in keyof T]: T[K] } = object>() {
+export function useChildInstanceContext<T extends MObject<T> = object>() {
   return useContext(ChildInstanceContext) as ChildInstance<T>
 }
 
 /**获取状态+错误信息+实例*/
-export function useChildInstanceContextState<T extends { [K in keyof T]: T[K] } = object>() {
+export function useChildInstanceContextState<T extends MObject<T> = object>() {
   const instance = useContext(ChildInstanceContext) as ChildInstance<T>
   const state = useSnapshot(instance.state)
   const errorState = useSnapshot(instance.errorState)

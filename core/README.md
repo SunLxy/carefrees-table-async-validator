@@ -49,10 +49,21 @@ npm install @carefrees/table-async-validator # yarn add @carefrees/table-async-v
 
 ## 类型参数
 
+**公共类型**
+
 ```ts
-import { ValidateError } from 'async-validator';
-import { ValidateFieldsError } from 'async-validator';
-import { RuleItem, ValidateFieldsError, Values } from 'async-validator';
+import {
+  RuleItem,
+  ValidateFieldsError,
+  Values,
+  ValidateError,
+} from 'async-validator';
+
+/**对象*/
+export type MObject<T> = {
+  [K in keyof T]: T[K];
+};
+
 /**子实例验证返回 */
 export interface ChildInstanceValidateAllResult<T extends object = object> {
   /**错误信息*/
@@ -70,21 +81,13 @@ export interface ChildInstanceValidateAllResult<T extends object = object> {
   isErrorInfo: boolean;
 }
 /**映射类型，将每个子项的验证结果映射到父项验证结果中*/
-export type ProviderInstanceValidateResultMappedType<
-  T extends {
-    [K in keyof T]: T[K];
-  }
-> = {
+export type ProviderInstanceValidateResultMappedType<T extends MObject<T>> = {
   [K in keyof T]: ({
     name: K;
   } & ChildInstanceValidateAllResult<T[K]>)[];
 }[keyof T];
 /**父项实例验证结果*/
-export interface ProviderInstanceValidateResult<
-  T extends {
-    [K in keyof T]: T[K];
-  }
-> {
+export interface ProviderInstanceValidateResult<T extends MObject<T>> {
   /** 没找到实例*/
   nameToNotFound: {
     name: keyof T;
@@ -95,13 +98,13 @@ export interface ProviderInstanceValidateResult<
   /**没有错误实例*/
   nameToSuccessInfo: ProviderInstanceValidateResultMappedType<T>;
 }
+```
 
+**父级类型参数**
+
+```ts
 /**父项实例*/
-export declare class ProviderInstance<
-  T extends {
-    [K in keyof T]: T[K];
-  }
-> {
+export declare class ProviderInstance<T extends MObject<T> = object> {
   /*** 子实例 */
   childInstanceState: { [K in keyof T]: ChildInstance<T[K]> };
   /**
@@ -129,33 +132,30 @@ export declare class ProviderInstance<
     isReject?: boolean;
   }) => Promise<ProviderInstanceValidateResult<T>>;
 }
+
 /**初始化实例*/
-export declare function useProviderInstance<
-  T extends {
-    [K in keyof T]: T[K];
-  }
->(instance?: ProviderInstance<T>): ProviderInstance<T>;
+export declare function useProviderInstance<T extends MObject<T> = object>(
+  instance?: ProviderInstance<T>
+): ProviderInstance<T>;
+
 /**context*/
 export declare const ProviderInstanceContext: import('react').Context<
   ProviderInstance<any>
 >;
+
 /**获取状态+实例*/
 export declare function useProviderInstanceContextState<
-  T extends {
-    [K in keyof T]: T[K];
-  }
+  T extends MObject<T> = object
 >(): [{ [K in keyof T]: ChildInstance<T[K]> }, ProviderInstance<T>];
+
 /**仅获取实例*/
 export declare function useProviderInstanceContext<
-  T extends {
-    [K in keyof T]: T[K];
-  }
+  T extends MObject<T> = object
 >(): ProviderInstance<T>;
+
 /**注册子实例*/
 export declare function useRegisterChildInstance<
-  T extends {
-    [K in keyof T]: T[K];
-  },
+  T extends MObject<T> = object,
   M extends keyof T = keyof T
 >(
   name: M
@@ -163,13 +163,13 @@ export declare function useRegisterChildInstance<
   childInstance: ChildInstance<T[M]>;
   providerInstance: ProviderInstance<T>;
 };
+```
 
+**子级类型参数**
+
+```ts
 /**子项实例*/
-export declare class ChildInstance<
-  T extends {
-    [K in keyof T]: T[K];
-  } = object
-> {
+export declare class ChildInstance<T extends MObject<T> = object> {
   /**命名空间*/
   namespace: PropertyKey;
   /**行主键字段*/
@@ -280,27 +280,25 @@ export declare class ChildInstance<
     list: Record<string, string | number>[];
   };
 }
+
 /**初始化实例*/
-export declare function useChildInstance<
-  T extends {
-    [K in keyof T]: T[K];
-  } = object
->(instance?: ChildInstance<T>): ChildInstance<T>;
+export declare function useChildInstance<T extends MObject<T> = object>(
+  instance?: ChildInstance<T>
+): ChildInstance<T>;
+
 /**context*/
 export declare const ChildInstanceContext: import('react').Context<
   ChildInstance<any>
 >;
+
 /**仅获取实例*/
 export declare function useChildInstanceContext<
-  T extends {
-    [K in keyof T]: T[K];
-  } = object
+  T extends MObject<T> = object
 >(): ChildInstance<T>;
+
 /**获取状态+错误信息+实例*/
 export declare function useChildInstanceContextState<
-  T extends {
-    [K in keyof T]: T[K];
-  } = object
+  T extends MObject<T> = object
 >(): [
   Record<string, T>,
   Record<string, Record<keyof T, string[]>>,
