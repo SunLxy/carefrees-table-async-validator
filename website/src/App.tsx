@@ -6,7 +6,8 @@ import {
   useChildInstanceContextState,
   useChildInstanceContext
 } from "@carefrees/table-async-validator"
-import { Table, Form, Button, Input, Tooltip, Popconfirm, } from "antd"
+import { ref } from "valtio"
+import { Table, Form, Button, Input, Tooltip, Popconfirm } from "antd"
 import type { TableProps } from "antd"
 import { useEffect, useMemo } from "react"
 
@@ -14,6 +15,7 @@ interface TableNameStateRowType {
   name: string
   age: number
   rowId: string
+  file?: FileList | null
 }
 
 interface TableNameState {
@@ -38,7 +40,53 @@ export const RenderCellDelete = (props: any) => {
 };
 
 
-const RenderCellInput = (props: { rowData: TableNameStateRowType, field: keyof TableNameStateRowType }) => {
+const RenderCellInputFile = (props: { rowData: TableNameStateRowType, field: 'file' }) => {
+  const { rowData, field } = props
+  const [state, errorState, childInstance] = useChildInstanceContextState<TableNameStateRowType>()
+  // 获取当前行的主键值
+  const rowId = rowData.rowId;
+  // 获取当前行的列值
+  const value = state?.[rowId]?.[field];
+  // 获取当前行的列错误信息
+  const errorList = errorState?.[rowId]?.[field];
+
+  const errorTip = useMemo(() => {
+    if (Array.isArray(errorList) && errorList.length) {
+      return (
+        <div>
+          {errorList.map((item, index) => (
+            <div key={index} style={{ color: 'red' }}>
+              {item}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return ''
+  }, [errorList]);
+
+  console.log(`${field} value: `, value)
+
+  return <Tooltip
+    open={Boolean(errorTip)}
+    title={errorTip}
+    color='white'
+  >
+    <div className={errorTip ? 'ant-form-item-has-error' : ''}>
+      <input
+        type="file"
+        multiple={true}
+        onChange={(e) => {
+          const _value = e.target.files
+          childInstance.updatedRowData(rowId, { [field]: _value ? ref(_value) : undefined })
+        }}
+      />
+    </div>
+  </Tooltip>
+}
+
+
+const RenderCellInput = (props: { rowData: TableNameStateRowType, field: Exclude<keyof TableNameStateRowType, 'file'> }) => {
   const { rowData, field } = props
   const [state, errorState, childInstance] = useChildInstanceContextState<TableNameStateRowType>()
   // 获取当前行的主键值
@@ -96,6 +144,11 @@ const columns: TableProps['columns'] = [
     title: '年龄',
     dataIndex: 'age',
     render: (_, rowData: any) => <RenderCellInput rowData={rowData} field='age' />,
+  },
+  {
+    title: '文件',
+    dataIndex: 'file',
+    render: (_, rowData: any) => <RenderCellInputFile rowData={rowData} field='file' />,
   },
 ]
 
