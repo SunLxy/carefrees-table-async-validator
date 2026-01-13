@@ -1,6 +1,6 @@
 {
   "name": "website",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@carefrees/table-async-validator": "0.0.1",
+    "@carefrees/table-async-validator": "0.0.2",
     "antd": "^6.1.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
