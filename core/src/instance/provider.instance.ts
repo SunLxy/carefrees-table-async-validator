@@ -23,7 +23,7 @@ export class ProviderInstance<T extends MObject<T> = object> {
   /**
    * 注销子实例
   */
-  unregister = (name: keyof T) => {
+  unRegister = (name: keyof T) => {
     delete this.childInstanceState[name]
   }
   // ===================================================子实例处理================================================================
@@ -107,7 +107,7 @@ export function useRegisterChildInstance<T extends MObject<T> = object, M extend
   childInstance.namespace = name
   useEffect(() => {
     providerInstance.register(name, childInstance)
-    return () => providerInstance.unregister(name)
+    return () => providerInstance.unRegister(name)
   }, [name, childInstance, providerInstance])
   return { childInstance, providerInstance }
 }

@@ -117,7 +117,7 @@ export declare class ProviderInstance<T extends MObject<T> = object> {
   /**
    * 注销子实例
    */
-  unregister: (name: keyof T) => void;
+  unRegister: (name: keyof T) => void;
   /**调用子项验证
    * @param options.names 子实例名称(可选)
    * @param options.rowKey 行主键值数组(可选)

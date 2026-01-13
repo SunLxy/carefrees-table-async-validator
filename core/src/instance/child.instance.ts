@@ -1,7 +1,7 @@
 /**
  * 子级
 */
-import { proxy, useSnapshot } from "valtio"
+import { proxy, useSnapshot, snapshot } from "valtio"
 import AsyncValidator, { RuleItem, ValidateError, ValidateFieldsError, Values } from 'async-validator';
 import { createContext, useRef, useContext } from "react"
 import type { ChildInstanceValidateAllResult, MObject } from "./interface";
@@ -200,7 +200,7 @@ export class ChildInstance<T extends MObject<T> = object> {
     }
     if (!isNeedValidate) {
       console.warn('no rules to validate')
-      return undefined
+      return Promise.resolve({ ...rowData })
     }
     return new Promise((resolve, reject) => {
       new AsyncValidator({ ...rules })
