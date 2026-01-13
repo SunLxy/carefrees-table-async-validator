@@ -5,7 +5,7 @@ import { Values } from "async-validator"
 export type MObject<T> = { [K in keyof T]: T[K] }
 
 /**子实例验证返回 */
-export interface ChildInstanceValidateAllResult<T extends object = object> {
+export interface ChildInstanceValidateAllResult<T extends MObject<T> = object> {
   /**错误信息*/
   errorInfo: Record<string, { errors: ValidateError[] | null, fields: ValidateFieldsError | Values, otherError?: any }>
   /**成功数据列表*/

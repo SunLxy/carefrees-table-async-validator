@@ -65,7 +65,7 @@ export type MObject<T> = {
 };
 
 /**子实例验证返回 */
-export interface ChildInstanceValidateAllResult<T extends object = object> {
+export interface ChildInstanceValidateAllResult<T extends MObject<T> = object> {
   /**错误信息*/
   errorInfo: Record<
     string,
