@@ -540,7 +540,11 @@ function ChildTable(props: {
   );
 }
 
-const formData = {
+type PartialTableNameState = {
+  [K in keyof TableNameState]?: TableNameState[K][];
+};
+
+const formData: PartialTableNameState = {
   a: [{ name: 'd', age: 0, rowId: 'a1' }],
 };
 

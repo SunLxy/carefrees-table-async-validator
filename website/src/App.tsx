@@ -209,8 +209,11 @@ function ChildTable(props: {
   </ChildInstanceContext.Provider>
 }
 
+type PartialTableNameState = {
+  [K in keyof TableNameState]?: TableNameState[K][];
+};
 
-const formData = {
+const formData: PartialTableNameState = {
   a: [{ name: 'd', age: 0, rowId: 'a1' }],
 }
 
@@ -228,6 +231,8 @@ const App = () => {
     try {
       const result = await providerInstance.validate()
       console.log('result', result)
+      // result.nameToSuccessInfo[0].
+
     } catch (error) {
       console.log('error', error)
     }
