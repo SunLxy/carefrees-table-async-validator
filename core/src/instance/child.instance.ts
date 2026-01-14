@@ -1,7 +1,7 @@
 /**
  * 子级
 */
-import { proxy, useSnapshot, snapshot } from "valtio"
+import { proxy, useSnapshot, ref } from "valtio"
 import AsyncValidator, { RuleItem, ValidateError, ValidateFieldsError, Values } from 'async-validator';
 import { createContext, useRef, useContext } from "react"
 import type { ChildInstanceValidateAllResult, MObject } from "./interface";
@@ -213,7 +213,7 @@ export class ChildInstance<T extends MObject<T> = object> {
             const field = _fields[index];
             const fidError = Array.isArray(errors) ? errors.filter((item) => item.field === field) : undefined
             if (fidError) {
-              this.errorState[rowKey][field] = fidError.map((item) => item.message || '')
+              this.errorState[rowKey][field] = ref(fidError.map((item) => item.message || ''))
             } else {
               delete this.errorState[rowKey][field]
             }
