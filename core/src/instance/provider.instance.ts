@@ -45,6 +45,9 @@ export class ProviderInstance<T extends MObject<T> = object> {
     const nameToErrorInfo: ProviderInstanceValidateResult<T>['nameToErrorInfo'] = []
     /**没有错误实例*/
     const nameToSuccessInfo: ProviderInstanceValidateResult<T>['nameToSuccessInfo'] = []
+    /**可以直接保存的数据*/
+    const saveData: ProviderInstanceValidateResult<T>['saveData'] = {} as ProviderInstanceValidateResult<T>['saveData']
+
     let _newNames = names
     if (!names || (Array.isArray(names) && names.length === 0)) {
       _newNames = Object.keys(this.childInstanceState) as (keyof T)[]
@@ -61,13 +64,14 @@ export class ProviderInstance<T extends MObject<T> = object> {
           nameToErrorInfo.push({ ...validateResult, name: _name })
         } else {
           nameToSuccessInfo.push({ ...validateResult, name: _name })
+          saveData[_name] = validateResult.dataList
         }
       }
     }
     if (isReject && nameToErrorInfo.length) {
-      return Promise.reject({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo })
+      return Promise.reject({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo, saveData })
     }
-    return Promise.resolve({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo })
+    return Promise.resolve({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo, saveData })
   }
 }
 /**初始化实例*/

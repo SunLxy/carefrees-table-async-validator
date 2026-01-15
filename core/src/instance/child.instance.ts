@@ -80,6 +80,19 @@ export class ChildInstance<T extends MObject<T> = object> {
     }
     return this
   }
+
+  /**
+   * 更新数据，并指定验证字段
+   * @param rowKey 行主键值
+   * @param objectData 更新数据对象
+   * @param fields 验证字段(需要把当前更新字段一起放入)
+  */
+  updatedRowDataAndValidate = (rowKey: string, objectData: Partial<T>, fields: string[]) => {
+    this.updatedRowData(rowKey, objectData, false)
+    this.validate(this.state[rowKey], fields, false)
+    return this
+  }
+
   /**新增一行数据
    * @param objectData 初始值
   */

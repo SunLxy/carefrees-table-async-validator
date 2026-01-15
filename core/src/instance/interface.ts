@@ -19,6 +19,10 @@ export type ProviderInstanceValidateResultMappedType<T extends MObject<T>> = {
   [K in keyof T]: ({ name: K } & ChildInstanceValidateAllResult<T[K]>)[]
 }[keyof T]
 
+export type MappedTypeSave<T extends MObject<T>> = {
+  [K in keyof T]: T[K][]
+}
+
 /**父项实例验证结果*/
 export interface ProviderInstanceValidateResult<T extends MObject<T>> {
   /** 没找到实例*/
@@ -27,4 +31,6 @@ export interface ProviderInstanceValidateResult<T extends MObject<T>> {
   nameToErrorInfo: ProviderInstanceValidateResultMappedType<T>
   /**没有错误实例*/
   nameToSuccessInfo: ProviderInstanceValidateResultMappedType<T>
+  /**可以直接保存的数据*/
+  saveData: { [K in keyof T]: T[K][] }
 }
