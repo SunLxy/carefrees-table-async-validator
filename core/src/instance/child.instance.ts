@@ -293,6 +293,7 @@ export class ChildInstance<T extends MObject<T> = object> {
     const _list = [...this._last_dataList].concat([{ [this.rowKey]: rowId }])
     /**更新操作状态为新增*/
     this.updatedOperationState(rowId, 'add')
+    console.log(_list)
     /**触发新增行数据事件*/
     this.onChangeRows?.(_list, rowId, 'add')
     return this
@@ -408,12 +409,12 @@ export class ChildInstance<T extends MObject<T> = object> {
    * @param options.isReject 存在错误时是否使用 Promise.reject 抛出错误(可选)
    * @returns 验证结果
   */
-  validateAll = async (options: { rowKeys?: PropertyKey[], fields?: PropertyKey[], isReject?: boolean, isHasOperationRow?: boolean }): Promise<ChildInstanceValidateAllResult<T>> => {
-    const { rowKeys, fields, isReject = true, isHasOperationRow = false } = options
+  validateAll = async (options: { rowKeys?: PropertyKey[], fields?: PropertyKey[], isReject?: boolean, isHasOperationRow?: boolean } = {}): Promise<ChildInstanceValidateAllResult<T>> => {
+    const { rowKeys, fields, isReject = true, isHasOperationRow = true } = options
     // 如果存在正在操作的行，则抛出错误
     if (isHasOperationRow && this.enableOperationState) {
       const hasOperationRow = this.isExistOperationState()
-      if (hasOperationRow) {
+      if (hasOperationRow.isExist) {
         return Promise.reject({
           errorInfo: {},
           dataList: [],
