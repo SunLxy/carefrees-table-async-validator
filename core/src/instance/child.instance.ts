@@ -496,3 +496,14 @@ export function useChildInstanceContextState<T extends MObject<T> = object>(opti
     string | undefined
   ]
 }
+
+/**获取操作状态+实例*/
+export function useChildInstanceContextOperationState<T extends MObject<T> = object>(options?: { sync?: boolean }) {
+  const instance = useContext(ChildInstanceContext) as ChildInstance<T>
+  const operationState = useSnapshot(instance.operationState, options)
+  return [operationState, instance, operationState.__defaultValue] as unknown as [
+    Record<string, 'add' | 'edit'>,
+    ChildInstance<T>,
+    string | undefined
+  ]
+}
