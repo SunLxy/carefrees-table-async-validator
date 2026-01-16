@@ -135,9 +135,9 @@ export function useProviderInstanceContext<T extends MObject<T> = object>() {
 }
 
 /**注册子实例*/
-export function useRegisterChildInstance<T extends MObject<T> = Record<PropertyKey, any>, M extends keyof T = keyof T>(name: M) {
+export function useRegisterChildInstance<T extends MObject<T> = Record<PropertyKey, any>, M extends keyof T = keyof T>(name: M, _childInstance?: ChildInstance<T[M]>) {
   const providerInstance = useProviderInstanceContext<T>()
-  const childInstance = useChildInstance<T[M]>()
+  const childInstance = useChildInstance<T[M]>(_childInstance)
   childInstance.namespace = name
   useEffect(() => {
     providerInstance.register(name, childInstance)

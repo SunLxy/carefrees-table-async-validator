@@ -153,7 +153,7 @@ const columns: TableProps['columns'] = [
 
 function ChildTable(props: {
   name: keyof TableNameState,
-  onChange?: (value: Record<string, string | number>[]) => void,
+  onChange?: (value: Record<PropertyKey, PropertyKey>[]) => void,
   value?: TableNameStateRowType[],
 }) {
   const { name, onChange, value } = props
@@ -173,7 +173,7 @@ function ChildTable(props: {
     }
   }, [childInstance])
 
-  const onDeleteRow = (rowKey: string) => {
+  const onDeleteRow = (rowKey: PropertyKey) => {
     childInstance.deleteRowData(rowKey)
     if (onChange) {
       onChange(_value?.filter((item) => item.rowId !== rowKey) || [])
