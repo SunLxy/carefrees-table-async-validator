@@ -448,7 +448,7 @@ export class ChildInstance<T extends MObject<T> = object> {
     for (let index = 0; index < array.length; index++) {
       const item = array[index];
       const rowKey = item[this.rowKey]
-      object[rowKey] = { ...item }
+      object[rowKey] = copy({ ...item })
       list.push({ [this.rowKey]: rowKey })
     }
     return { data: object, list }
