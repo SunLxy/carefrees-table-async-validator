@@ -288,7 +288,7 @@ export class ChildInstance<T extends MObject<T> = object> {
   /**点击新增操作
    * @param initData 初始值
   */
-  onClickAddRowOperation = (initData: Partial<T>) => {
+  onClickAddRowOperation = (initData: Partial<T> = {}) => {
     const { rowId } = this.addRowData(initData)
     const _list = [...this._last_dataList].concat([{ [this.rowKey]: rowId }])
     /**更新操作状态为新增*/
