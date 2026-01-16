@@ -1,6 +1,6 @@
 {
   "name": "@carefrees/table-async-validator",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "author": "SunLxy <1011771396@qq.com>",
   "homepage": "https://github.com/SunLxy/carefrees-table-async-validator",
@@ -25,8 +25,8 @@
     "watch": "carefrees-rslib build --watch"
   },
   "dependencies": {
-    "fast-copy": "~4.0.2",
     "async-validator": "~4.2.5",
+    "fast-copy": "~4.0.2",
     "valtio": "~2.3.0"
   },
   "devDependencies": {
