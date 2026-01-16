@@ -30,7 +30,7 @@ export const RenderCellDelete = (props: any) => {
     title="确认删除吗？"
     description="删除后将无法恢复"
     onConfirm={() => {
-      childInstance.onDeleteRow(rowData.rowId)
+      childInstance.onClickDeleteRowOperation(rowData.rowId)
     }}
     okText="确认"
     cancelText="取消"
@@ -173,14 +173,14 @@ function ChildTable(props: {
     }
   }, [childInstance])
 
-  const onDeleteRow = (rowKey: PropertyKey) => {
-    childInstance.deleteRowData(rowKey)
+  const onDeleteRow = (list: Record<PropertyKey, PropertyKey>[]) => {
     if (onChange) {
-      onChange(_value?.filter((item) => item.rowId !== rowKey) || [])
+      onChange(list)
     }
   }
+
   /**挂载删除操作方法*/
-  childInstance.onDeleteRow = onDeleteRow
+  childInstance.onChangeRows = onDeleteRow
 
   useEffect(() => {
     return () => {

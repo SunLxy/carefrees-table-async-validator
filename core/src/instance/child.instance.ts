@@ -62,16 +62,12 @@ export class ChildInstance<T extends MObject<T> = object> {
   }
 
   // ===================================================挂载参数================================================================
-  /**
-   * 行数据删除时触发,由外部挂载事件
-   * @param rowKey 行主键值
-  */
-  onDeleteRow: (rowKey: PropertyKey) => void = () => void 0;
   /**新增一行数据时触发,由外部挂载事件
    * @param list 新增数据列表
    * @param rowKey 新增的行主键值
+   * @param type 操作类型
   */
-  onAddRows: (list: Record<PropertyKey, PropertyKey>[], rowKey: PropertyKey) => void = () => void 0;
+  onChangeRows: (list: Record<PropertyKey, PropertyKey>[], rowKey: PropertyKey, type: "add" | "delete") => void = () => void 0;
   // ===================================================挂载参数================================================================
 
   // ===================================================行数据处理================================================================
@@ -273,7 +269,9 @@ export class ChildInstance<T extends MObject<T> = object> {
     this.removeTempState(rowKey)
     this.deleteErrorInfo(rowKey)
     if (operationState === 'add') {
-      this.onDeleteRow?.(rowKey)
+      const _list = [...this._last_dataList].filter((item) => item[this.rowKey] !== rowKey)
+      /**触发删除行数据事件*/
+      this.onChangeRows?.(_list, rowKey, 'delete')
     }
     return this
   }
@@ -296,7 +294,7 @@ export class ChildInstance<T extends MObject<T> = object> {
     /**更新操作状态为新增*/
     this.updatedOperationState(rowId, 'add')
     /**触发新增行数据事件*/
-    this.onAddRows?.(_list, rowId)
+    this.onChangeRows?.(_list, rowId, 'add')
     return this
   }
   /**点击保存操作
@@ -324,6 +322,24 @@ export class ChildInstance<T extends MObject<T> = object> {
       }
     }
     return Promise.resolve(isValidate)
+  }
+  /**
+   * 点击删除
+   * @param rowKey 行主键值
+  */
+  onClickDeleteRowOperation = (rowKey: PropertyKey) => {
+    const _list = [...this._last_dataList].filter((item) => item[this.rowKey] !== rowKey)
+    /**触发删除行数据事件*/
+    this.onChangeRows?.(_list, rowKey, 'delete')
+    // 删除行数据
+    this.deleteRowData(rowKey)
+    // 删除错误信息
+    this.deleteErrorInfo(rowKey)
+    /**移除操作状态*/
+    this.removeOperationState(rowKey)
+    /**移除临时存储数据*/
+    this.removeTempState(rowKey)
+    return this
   }
   // ===================================================操作方法================================================================
 
