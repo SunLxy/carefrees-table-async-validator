@@ -191,6 +191,8 @@ export declare class ChildInstance<T extends MObject<T> = object> {
   namespace: PropertyKey;
   /**行主键字段*/
   rowKey: PropertyKey;
+  /**是否启用操作状态*/
+  enableOperationState: boolean;
   /**
    * 行数据的主键值，对应一行中字段的存储数据
    */
@@ -427,6 +429,7 @@ export declare function useChildInstanceContextState<
 >(): [
   Record<string, T>,
   Record<string, Record<keyof T, string[]>>,
+  Record<string, 'add' | 'edit'>,
   ChildInstance<T>
 ];
 ```
@@ -482,7 +485,7 @@ const RenderCellInputFile = (props: {
   field: 'file';
 }) => {
   const { rowData, field } = props;
-  const [state, errorState, childInstance] =
+  const [state, errorState, operationState, childInstance] =
     useChildInstanceContextState<TableNameStateRowType>();
   // 获取当前行的主键值
   const rowId = rowData.rowId;
@@ -531,7 +534,7 @@ const RenderCellInput = (props: {
   field: Exclude<keyof TableNameStateRowType, 'file'>;
 }) => {
   const { rowData, field } = props;
-  const [state, errorState, childInstance] =
+  const [state, errorState, operationState, childInstance] =
     useChildInstanceContextState<TableNameStateRowType>();
   // 获取当前行的主键值
   const rowId = rowData.rowId;

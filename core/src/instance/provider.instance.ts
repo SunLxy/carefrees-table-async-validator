@@ -33,7 +33,7 @@ export class ProviderInstance<T extends MObject<T> = object> {
     let hasOperationRow = false
     for (const key in this.childInstanceState) {
       const childInstance = this.childInstanceState[key]
-      if (childInstance) {
+      if (childInstance && childInstance.enableOperationState) {
         const isExistOperationState = childInstance.isExistOperationState()
         if (isExistOperationState.isExist) {
           hasOperationRow = true

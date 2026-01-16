@@ -42,7 +42,7 @@ export const RenderCellDelete = (props: any) => {
 
 const RenderCellInputFile = (props: { rowData: TableNameStateRowType, field: 'file' }) => {
   const { rowData, field } = props
-  const [state, errorState, childInstance] = useChildInstanceContextState<TableNameStateRowType>()
+  const [state, errorState, operationState, childInstance] = useChildInstanceContextState<TableNameStateRowType>()
   // 获取当前行的主键值
   const rowId = rowData.rowId;
   // 获取当前行的列值
@@ -87,7 +87,7 @@ const RenderCellInputFile = (props: { rowData: TableNameStateRowType, field: 'fi
 
 const RenderCellInput = (props: { rowData: TableNameStateRowType, field: Exclude<keyof TableNameStateRowType, 'file'> }) => {
   const { rowData, field } = props
-  const [state, errorState, childInstance] = useChildInstanceContextState<TableNameStateRowType>()
+  const [state, errorState, operationState, childInstance] = useChildInstanceContextState<TableNameStateRowType>()
   // 获取当前行的主键值
   const rowId = rowData.rowId;
   // 获取当前行的列值

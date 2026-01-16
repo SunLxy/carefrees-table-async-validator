@@ -13,6 +13,8 @@ export class ChildInstance<T extends MObject<T> = object> {
   namespace: PropertyKey = ''
   /**行主键字段*/
   rowKey: PropertyKey = 'rowId'
+  /**是否启用操作状态*/
+  enableOperationState = false
   /**
    * 行数据的主键值，对应一行中字段的存储数据
   */
@@ -386,14 +388,14 @@ export class ChildInstance<T extends MObject<T> = object> {
   /**验证所有数据
    * @param options.rowKeys 行主键值数组(可选)
    * @param options.fields 列字段数组(可选)
-   * @param options.isHasOperationRow 是否判断存在正在操作的行，如果存在则抛出错误(可选)
+   * @param options.isHasOperationRow 是否判断存在正在操作的行，如果存在则抛出错误,在启用操作状态时使用(可选)
    * @param options.isReject 存在错误时是否使用 Promise.reject 抛出错误(可选)
    * @returns 验证结果
   */
   validateAll = async (options: { rowKeys?: PropertyKey[], fields?: PropertyKey[], isReject?: boolean, isHasOperationRow?: boolean }): Promise<ChildInstanceValidateAllResult<T>> => {
     const { rowKeys, fields, isReject = true, isHasOperationRow = false } = options
     // 如果存在正在操作的行，则抛出错误
-    if (isHasOperationRow) {
+    if (isHasOperationRow && this.enableOperationState) {
       const hasOperationRow = this.isExistOperationState()
       if (hasOperationRow) {
         return Promise.reject({
@@ -483,9 +485,11 @@ export function useChildInstanceContextState<T extends MObject<T> = object>() {
   const instance = useContext(ChildInstanceContext) as ChildInstance<T>
   const state = useSnapshot(instance.state)
   const errorState = useSnapshot(instance.errorState)
-  return [state, errorState, instance] as [
+  const operationState = useSnapshot(instance.operationState)
+  return [state, errorState, operationState, instance] as [
     Record<string, T>,
     Record<string, Record<keyof T, string[]>>,
+    Record<string, 'add' | 'edit'>,
     ChildInstance<T>,
   ]
 }
