@@ -124,9 +124,9 @@ export const ProviderInstanceContext = createContext<ProviderInstance<any>>(new 
 export function useProviderInstanceContextState<T extends MObject<T> = object>() {
   const providerInstance = useContext<ProviderInstance<T>>(ProviderInstanceContext)
   const state = useSnapshot(providerInstance.childInstanceState)
-  return [state, providerInstance] as unknown as [{
+  return [state, providerInstance, (state as any).__defaultValue] as unknown as [{
     [K in keyof T]: ChildInstance<T[K]>;
-  }, ProviderInstance<T>]
+  }, ProviderInstance<T>, string]
 }
 
 /**仅获取实例*/

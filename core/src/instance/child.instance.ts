@@ -481,15 +481,18 @@ export function useChildInstanceContext<T extends MObject<T> = object>() {
 }
 
 /**获取状态+错误信息+实例*/
-export function useChildInstanceContextState<T extends MObject<T> = object>() {
+export function useChildInstanceContextState<T extends MObject<T> = object>(options?: { sync?: boolean }) {
   const instance = useContext(ChildInstanceContext) as ChildInstance<T>
-  const state = useSnapshot(instance.state)
+  const state = useSnapshot(instance.state, options)
   const errorState = useSnapshot(instance.errorState)
   const operationState = useSnapshot(instance.operationState)
-  return [state, errorState, operationState, instance] as [
+  return [state, errorState, operationState, instance, state.__defaultValue, errorState.__defaultValue, operationState.__defaultValue] as unknown as [
     Record<string, T>,
     Record<string, Record<keyof T, string[]>>,
     Record<string, 'add' | 'edit'>,
     ChildInstance<T>,
+    string | undefined,
+    string | undefined,
+    string | undefined
   ]
 }
