@@ -25,6 +25,7 @@
     "watch": "carefrees-rslib build --watch"
   },
   "dependencies": {
+    "fast-copy": "~4.0.2",
     "async-validator": "~4.2.5",
     "valtio": "~2.3.0"
   },

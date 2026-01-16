@@ -7,11 +7,13 @@ export type MObject<T> = { [K in keyof T]: T[K] }
 /**子实例验证返回 */
 export interface ChildInstanceValidateAllResult<T extends MObject<T> = object> {
   /**错误信息*/
-  errorInfo: Record<string, { errors: ValidateError[] | null, fields: ValidateFieldsError | Values, otherError?: any }>
+  errorInfo: Record<PropertyKey, { errors: ValidateError[] | null, fields: ValidateFieldsError | Values, otherError?: any }>
   /**成功数据列表*/
   dataList: T[]
   /**是否有错误*/
   isErrorInfo: boolean
+  /**是否存在正在操作的行*/
+  isHasOperationRow?: boolean
 }
 
 /**映射类型，将每个子项的验证结果映射到父项验证结果中*/
@@ -33,4 +35,6 @@ export interface ProviderInstanceValidateResult<T extends MObject<T>> {
   nameToSuccessInfo: ProviderInstanceValidateResultMappedType<T>
   /**可以直接保存的数据*/
   saveData: { [K in keyof T]: T[K][] }
+  /**是否存在正在操作的行*/
+  isHasOperationRow?: boolean
 }

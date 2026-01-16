@@ -59,16 +59,14 @@ import {
   ValidateError,
 } from 'async-validator';
 
-/**对象*/
 export type MObject<T> = {
   [K in keyof T]: T[K];
 };
-
 /**子实例验证返回 */
 export interface ChildInstanceValidateAllResult<T extends MObject<T> = object> {
   /**错误信息*/
   errorInfo: Record<
-    string,
+    PropertyKey,
     {
       errors: ValidateError[] | null;
       fields: ValidateFieldsError | Values;
@@ -79,6 +77,8 @@ export interface ChildInstanceValidateAllResult<T extends MObject<T> = object> {
   dataList: T[];
   /**是否有错误*/
   isErrorInfo: boolean;
+  /**是否存在正在操作的行*/
+  isHasOperationRow?: boolean;
 }
 /**映射类型，将每个子项的验证结果映射到父项验证结果中*/
 export type ProviderInstanceValidateResultMappedType<T extends MObject<T>> = {
@@ -86,6 +86,9 @@ export type ProviderInstanceValidateResultMappedType<T extends MObject<T>> = {
     name: K;
   } & ChildInstanceValidateAllResult<T[K]>)[];
 }[keyof T];
+export type MappedTypeSave<T extends MObject<T>> = {
+  [K in keyof T]: T[K][];
+};
 /**父项实例验证结果*/
 export interface ProviderInstanceValidateResult<T extends MObject<T>> {
   /** 没找到实例*/
@@ -97,12 +100,20 @@ export interface ProviderInstanceValidateResult<T extends MObject<T>> {
   nameToErrorInfo: ProviderInstanceValidateResultMappedType<T>;
   /**没有错误实例*/
   nameToSuccessInfo: ProviderInstanceValidateResultMappedType<T>;
+  /**可以直接保存的数据*/
+  saveData: {
+    [K in keyof T]: T[K][];
+  };
+  /**是否存在正在操作的行*/
+  isHasOperationRow?: boolean;
 }
 ```
 
 **父级类型参数**
 
 ```ts
+import type { ProviderInstanceValidateResult, MObject } from './interface';
+import { ChildInstance } from './child.instance';
 /**父项实例*/
 export declare class ProviderInstance<T extends MObject<T> = object> {
   /*** 子实例 */
@@ -118,18 +129,22 @@ export declare class ProviderInstance<T extends MObject<T> = object> {
    * 注销子实例
    */
   unRegister: (name: keyof T) => void;
+  /**判断子实例中是否存在正在操作的行*/
+  hasOperationRow: () => boolean;
   /**调用子项验证
    * @param options.names 子实例名称(可选)
    * @param options.rowKey 行主键值数组(可选)
    * @param options.fields 列字段数组(可选)
+   * @param options.isHasOperationRow 是否判断存在正在操作的行，如果存在则抛出错误(可选)
    * @param options.isReject 是否使用 Promise.reject 抛出错误(可选)
    * @returns 验证结果
    */
   validate: (options?: {
     names?: (keyof T)[];
-    rowKey?: string[];
-    fields?: string[];
+    rowKey?: PropertyKey[];
+    fields?: PropertyKey[];
     isReject?: boolean;
+    isHasOperationRow?: boolean;
   }) => Promise<ProviderInstanceValidateResult<T>>;
 }
 
@@ -168,35 +183,55 @@ export declare function useRegisterChildInstance<
 **子级类型参数**
 
 ```ts
+import { RuleItem, ValidateFieldsError, Values } from 'async-validator';
+import type { ChildInstanceValidateAllResult, MObject } from './interface';
 /**子项实例*/
 export declare class ChildInstance<T extends MObject<T> = object> {
   /**命名空间*/
   namespace: PropertyKey;
   /**行主键字段*/
-  rowKey: string;
+  rowKey: PropertyKey;
   /**
    * 行数据的主键值，对应一行中字段的存储数据
    */
-  state: Record<string, T>;
+  state: Record<PropertyKey, T>;
   /**
    * 行数据的主键值，对应一行中所有列的错误信息
    */
-  errorState: Record<string, Record<string, string[]>>;
+  errorState: Record<PropertyKey, Record<PropertyKey, string[]>>;
+  /**操作状态 新增/编辑*/
+  operationState: Record<PropertyKey, 'add' | 'edit'>;
+  /**临时存储行数据(在编辑时使用，点击编辑之前存储数据，在取消编辑时可以根据存储的数据进行还原)*/
+  tempState: Record<PropertyKey, T>;
   /**是否初始化*/
   private isCtor;
   /**原始数据列表(未初始化时存储数据)*/
   _o_dataList: T[];
   /**最新的列表渲染数据(每一次传入的数据)*/
-  _last_dataList: Record<string, string | number>[];
+  _last_dataList: Record<PropertyKey, PropertyKey>[];
   /**
    * 初始化值(建议进行深度拷贝，避免直接引用导致数据存在问题)
    */
-  ctor: (data?: T[]) => Record<string, string | number>[];
+  ctor: (data?: T[]) => Record<PropertyKey, PropertyKey>[];
+
+  // ===================================================挂载参数================================================================
   /**
    * 行数据删除时触发,由外部挂载事件
    * @param rowKey 行主键值
    */
-  onDeleteRow: (rowKey: string) => void;
+  onDeleteRow: (rowKey: PropertyKey) => void;
+  /**新增一行数据时触发,由外部挂载事件
+   * @param list 新增数据列表
+   * @param rowKey 新增的行主键值
+   */
+  onAddRows: (
+    list: Record<PropertyKey, PropertyKey>[],
+    rowKey: PropertyKey
+  ) => void;
+  // ===================================================挂载参数================================================================
+
+  // ===================================================行数据处理================================================================
+
   /**
    * 更新行数据
    * @param rowKey 行主键值
@@ -204,9 +239,20 @@ export declare class ChildInstance<T extends MObject<T> = object> {
    * @param isValidate 是否验证(可选)
    */
   updatedRowData: (
-    rowKey: string,
+    rowKey: PropertyKey,
     objectData: Partial<T>,
     isValidate?: boolean
+  ) => this;
+  /**
+   * 更新数据，并指定验证字段
+   * @param rowKey 行主键值
+   * @param objectData 更新数据对象
+   * @param fields 验证字段(需要把当前更新字段一起放入)
+   */
+  updatedRowDataAndValidate: (
+    rowKey: PropertyKey,
+    objectData: Partial<T>,
+    fields: PropertyKey[]
   ) => this;
   /**新增一行数据
    * @param objectData 初始值
@@ -218,40 +264,107 @@ export declare class ChildInstance<T extends MObject<T> = object> {
   /**删除一行数据
    * @param rowKey 行主键值
    */
-  deleteRowData: (rowKey: string) => this;
+  deleteRowData: (rowKey: PropertyKey) => this;
   /**
    * 清理所有数据,并设置成未进行初始化
    * @param isInitProxy 是否初始化为新的proxy对象(可选)
    */
   clear: (isInitProxy?: boolean) => this;
+  // ===================================================行数据处理================================================================
+
+  // ===================================================错误信息处理================================================================
+
   /**
    * 更新行数据的错误信息
    * @param rowKey 行主键值
    * @param objectErrorInfo 行数据错误信息对象
    */
   updatedErrorInfo: (
-    rowKey: string,
-    objectErrorInfo: Record<string, string[]>
+    rowKey: PropertyKey,
+    objectErrorInfo: Record<PropertyKey, string[]>
   ) => this;
   /**
    * 清理错误信息
    * @param rowKey 行主键值
    * @param fields 列字段数组(可选)
    */
-  deleteErrorInfo: (rowKey: string, fields?: string | string[]) => this;
+  deleteErrorInfo: (
+    rowKey: PropertyKey,
+    fields?: PropertyKey | PropertyKey[]
+  ) => this;
   /**
    * 清理所有错误信息
    */
   clearErrorInfo: (isInitProxy?: boolean) => this;
+
+  // ===================================================错误信息处理================================================================
+
+  // ===================================================操作状态================================================================
+
+  /**更新操作状态*/
+  updatedOperationState: (
+    rowKey: PropertyKey | PropertyKey[],
+    operationState: 'add' | 'edit'
+  ) => this;
+  /**移除操作状态*/
+  removeOperationState: (rowKey: PropertyKey | PropertyKey[]) => this;
+  /**判断是否存在操作状态数据*/
+  isExistOperationState: (rowKeys?: PropertyKey[]) => {
+    editKeys: any[];
+    addKeys: any[];
+    isExist: boolean;
+  };
+
+  // ===================================================操作状态================================================================
+
+  // ===================================================临时存储行数据================================================================
+
+  /**更新临时存储数据*/
+  updatedTempState: (rowKey: PropertyKey, objectData: Partial<T>) => this;
+  /**移除临时存储数据*/
+  removeTempState: (rowKey: PropertyKey) => this;
+  /**获取临时存储数据*/
+  getTempState: (rowKey: PropertyKey) => T;
+
+  // ===================================================临时存储行数据================================================================
+
+  // ========================================================操作方法===========================================================
+
+  /**点击取消 编辑/新增 状态 (编辑：会还原编辑之前的数据，新增：会删除当前这一条数据)
+   * @param rowKey 行主键值
+   */
+  onCancelRowOperation: (rowKey: PropertyKey) => this;
+  /**点击编辑操作
+   * @param rowKey 行主键值
+   */
+  onClickEditRowOperation: (rowKey: PropertyKey) => this;
+  /**点击新增操作
+   * @param initData 初始值
+   */
+  onClickAddRowOperation: (initData: Partial<T>) => this;
+  /**点击保存操作
+   * @param rowKey 行主键值
+   * @param isThrowError 是否抛出错误(可选)
+   */
+  onClickSaveRowOperation: (
+    rowKey: PropertyKey,
+    isThrowError?: boolean
+  ) => Promise<boolean>;
+
+  // ========================================================操作方法===========================================================
+
+  // ===================================================规则处理================================================================
+
   /**列规则 */
   rules: Record<
-    string,
+    PropertyKey,
     | ((
         rowData: T,
         instance: ChildInstance<T>
       ) => RuleItem[] | Promise<RuleItem[]>)
     | RuleItem[]
   >;
+
   /**规则验证
    * @param rowData 行数据对象
    * @param fields 列字段数组(可选)
@@ -259,26 +372,38 @@ export declare class ChildInstance<T extends MObject<T> = object> {
    */
   validate: (
     rowData: T,
-    fields?: string[],
+    fields?: PropertyKey[],
     isReturn?: boolean
   ) => Promise<ValidateFieldsError | Values>;
   /**验证所有数据
    * @param options.rowKeys 行主键值数组(可选)
    * @param options.fields 列字段数组(可选)
+   * @param options.isHasOperationRow 是否判断存在正在操作的行，如果存在则抛出错误(可选)
    * @param options.isReject 存在错误时是否使用 Promise.reject 抛出错误(可选)
    * @returns 验证结果
    */
   validateAll: (options: {
-    rowKeys?: string[];
-    fields?: string[];
+    rowKeys?: PropertyKey[];
+    fields?: PropertyKey[];
     isReject?: boolean;
+    isHasOperationRow?: boolean;
   }) => Promise<ChildInstanceValidateAllResult<T>>;
+
+  // ===================================================规则处理================================================================
+
+  // ===================================================数据转换================================================================
+  /**
+   * 把数组转换成 主键 => 数据 的对象
+   * @param array 数组
+   * @returns 转换后的对象
+   */
   convertArrayToObject: <K extends T = T>(
     array: K[]
   ) => {
-    data: Record<string, T>;
-    list: Record<string, string | number>[];
+    data: Record<PropertyKey, T>;
+    list: Record<PropertyKey, PropertyKey>[];
   };
+  // ===================================================数据转换================================================================
 }
 
 /**初始化实例*/

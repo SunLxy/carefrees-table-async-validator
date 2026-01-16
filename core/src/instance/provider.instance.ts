@@ -28,15 +28,45 @@ export class ProviderInstance<T extends MObject<T> = object> {
   }
   // ===================================================子实例处理================================================================
 
+  /**判断子实例中是否存在正在操作的行*/
+  hasOperationRow = (): boolean => {
+    let hasOperationRow = false
+    for (const key in this.childInstanceState) {
+      const childInstance = this.childInstanceState[key]
+      if (childInstance) {
+        const isExistOperationState = childInstance.isExistOperationState()
+        if (isExistOperationState.isExist) {
+          hasOperationRow = true
+          break
+        }
+      }
+    }
+    return hasOperationRow
+  }
+
   /**调用子项验证
    * @param options.names 子实例名称(可选)
    * @param options.rowKey 行主键值数组(可选)
    * @param options.fields 列字段数组(可选)
+   * @param options.isHasOperationRow 是否判断存在正在操作的行，如果存在则抛出错误(可选)
    * @param options.isReject 是否使用 Promise.reject 抛出错误(可选)
    * @returns 验证结果
   */
-  validate = async (options: { names?: (keyof T)[], rowKey?: string[], fields?: string[], isReject?: boolean } = {}): Promise<ProviderInstanceValidateResult<T>> => {
-    const { names, rowKey, fields, isReject = true } = options
+  validate = async (options: { names?: (keyof T)[], rowKey?: PropertyKey[], fields?: PropertyKey[], isReject?: boolean, isHasOperationRow?: boolean } = {}): Promise<ProviderInstanceValidateResult<T>> => {
+    const { names, rowKey, fields, isReject = true, isHasOperationRow = false } = options
+    if (isHasOperationRow) {
+      const hasOperationRow = this.hasOperationRow()
+      // 如果存在正在操作的行，则抛出错误
+      if (hasOperationRow) {
+        return Promise.reject({
+          nameToNotFound: [],
+          nameToErrorInfo: [],
+          nameToSuccessInfo: [],
+          saveData: {},
+          isHasOperationRow: true
+        })
+      }
+    }
     // rowKey 如果不为空，则验证指定多行数据，如果没有，则验证所有
     // fields 如果不为空，则验证指定列数据，如果没有，则验证所有
     /**没找到实例*/
@@ -69,9 +99,9 @@ export class ProviderInstance<T extends MObject<T> = object> {
       }
     }
     if (isReject && nameToErrorInfo.length) {
-      return Promise.reject({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo, saveData })
+      return Promise.reject({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo, saveData, })
     }
-    return Promise.resolve({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo, saveData })
+    return Promise.resolve({ nameToNotFound, nameToErrorInfo, nameToSuccessInfo, saveData, })
   }
 }
 /**初始化实例*/
