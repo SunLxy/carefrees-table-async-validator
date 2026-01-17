@@ -1,7 +1,7 @@
 /**
  * 子级
 */
-import { proxy, useSnapshot, ref } from "valtio"
+import { proxy, useSnapshot, ref, snapshot } from "valtio"
 import AsyncValidator, { RuleItem, ValidateError, ValidateFieldsError, Values } from 'async-validator';
 import { createContext, useRef, useContext } from "react"
 import type { ChildInstanceValidateAllResult, MObject } from "./interface";
@@ -85,9 +85,9 @@ export class ChildInstance<T extends MObject<T> = object> {
     for (let index = 0; index < keys.length; index++) {
       const field = keys[index];
       this.state[rowKey][field] = objectData[field]
-      if (isValidate) {
-        this.validate(this.state[rowKey], [field], false)
-      }
+    }
+    if (isValidate) {
+      this.validate(snapshot(this.state[rowKey]) as T, keys, false)
     }
     return this
   }
@@ -100,7 +100,7 @@ export class ChildInstance<T extends MObject<T> = object> {
   */
   updatedRowDataAndValidate = (rowKey: PropertyKey, objectData: Partial<T>, fields: PropertyKey[]) => {
     this.updatedRowData(rowKey, objectData, false)
-    this.validate(this.state[rowKey], fields, false)
+    this.validate(snapshot(this.state[rowKey]) as T, fields, false)
     return this
   }
 
@@ -306,7 +306,7 @@ export class ChildInstance<T extends MObject<T> = object> {
     let isValidate = true
     try {
       // 验证是否通过
-      const resultData = await this.validate(this.state[rowKey])
+      const resultData = await this.validate(snapshot(this.state[rowKey]) as T)
       if (resultData) {
         isValidate = true
         // 移除错误信息
@@ -434,7 +434,7 @@ export class ChildInstance<T extends MObject<T> = object> {
     const dataList: T[] = []
     for (let index = 0; index < _keys.length; index++) {
       const key = _keys[index];
-      const rowData = this.state[key];
+      const rowData = snapshot(this.state[key]) as T;
       try {
         await this.validate(rowData, fields, true);
         dataList.push(rowData)
